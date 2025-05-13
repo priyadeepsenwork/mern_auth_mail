@@ -29,6 +29,8 @@ const userSchema = new mongoose.Schema({
     verificationTokenExpiresAt: Date
 }, {timestamps: true})
 
+export const User = mongoose.model('User', userSchema)
+
 //timestamps: true ==> createdAt and updatedAt will be
 //added in the schema automatically by mongoose
 
