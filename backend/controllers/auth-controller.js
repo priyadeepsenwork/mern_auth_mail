@@ -1,6 +1,6 @@
 import { User } from "../models/user-model.js";
 import bcrypt from "bcryptjs";
-import { generateTokenAndSetCookie} from '../utils/generateTokenAndSetCookie.js'
+import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
 import { sendVerificationEmail, sendWelcomeEmail } from "../mailtrap/emails.js";
 
 const signup = async (req, res) => {
@@ -15,14 +15,15 @@ const signup = async (req, res) => {
     if (userAlreadyExists) {
       return res.status(400).json({
         success: false,
-        message: `User with the email: '${email} already exists!'`,
+        message: `User with the email: '${email}' already exists!'`,
       });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const verificationToken = Math.floor(
-      100000 + Math.random() * 9000
-    ).toString();
+      100000 + Math.random() * 900000
+    ).toString(); // 6-digit OTP
+
     const user = new User({
       email,
       password: hashedPassword,
@@ -38,7 +39,7 @@ const signup = async (req, res) => {
     generateTokenAndSetCookie(res, user._id);
 
     //mailtrap
-    await sendVerificationEmail(user.email, verificationToken)
+    await sendVerificationEmail(user.email, verificationToken);
 
     res.status(201).json({
       success: true,
@@ -51,46 +52,50 @@ const signup = async (req, res) => {
   } catch (error) {
     return res.status(404).json({
       success: false,
-      message: `Signup failed! Check you request body/ link or Code error'`,
+      message: "Signup failed! Check your request body, link, or code logic.",
       data: error.message,
     });
   }
 };
 
-const verifyEmail = async(req, res) => {
+const verifyEmail = async (req, res) => {
   // __ __ __ __ __ __  : entering the OTP like this
-  const {code} = req.body;
+  const { code } = req.body;
   try {
     const user = await User.findOne({
       verificationToken: code,
-      verificationTokenExpiresAt: { $gt: Date.now()}
-    })
+      verificationTokenExpiresAt: { $gt: Date.now() },
+    });
 
-    if(!user) {
+    if (!user) {
       return res.status(400).json({
         success: false,
-        message: "Invalid verification code..."
-      })
+        message: "Invalid verification code...",
+      });
     }
 
     user.isVerified = true;
-    user.verificationToken = undefined
-    user.verificationTokenExpiresAt = undefined
-    await user.save()
+    user.verificationToken = undefined;
+    user.verificationTokenExpiresAt = undefined;
+    await user.save();
 
     await sendWelcomeEmail(user.email, user.name);
     res.status(200).json({
       success: true,
-      message: 'Email verified successfully!',
+      message: "Email verified successfully!",
       user: {
         ...user._doc,
         password: undefined,
-      }
-    })
+      },
+    });
   } catch (error) {
-    
+    res.status(500).json({
+    success: false,
+    message: "Email verification failed.",
+    data: error.message,
+  });
   }
-}
+};
 
 const login = async (req, res) => {
   res.send("Login Route");
