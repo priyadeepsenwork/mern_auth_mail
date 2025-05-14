@@ -138,6 +138,9 @@ dist
 
 # Optional stylelint cache
 
+#Files
+mailtrap_token_key.js
+
 # SvelteKit build / generate output
 .svelte-kit
 
