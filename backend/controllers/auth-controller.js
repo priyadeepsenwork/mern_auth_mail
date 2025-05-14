@@ -7,8 +7,9 @@ import {
   sendVerificationEmail,
   sendWelcomeEmail,
   sendPasswordResetEmail,
-  sendResetSuccessEmail
+  sendResetSuccessEmail,
 } from "../mailtrap/emails.js";
+import { resourceLimits } from "worker_threads";
 
 const signup = async (req, res) => {
   const { email, password, name } = req.body;
@@ -196,36 +197,67 @@ const resetPassword = async (req, res) => {
     const user = await User.findOne({
       resetPasswordToken: token,
       resetPasswordExpiresAt: { $gt: Date.now() },
-    })
+    });
 
-    if(!user){
+    if (!user) {
       return res.status(400).json({
         success: false,
-        message: `Invalid or expired reset token`
-      })
+        message: `Invalid or expired reset token`,
+      });
     }
 
     //update password and also the tokens
-    const hashedPassword = await bcrypt.hash(password, 10)
-    user.password = hashedPassword
-    user.resetPasswordToken = undefined
-    user.resetPasswordExpiresAt = undefined
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpiresAt = undefined;
 
-    await user.save()
+    await user.save();
 
-    await sendResetSuccessEmail(user.email)
+    await sendResetSuccessEmail(user.email);
 
     res.status(200).json({
       success: true,
-      message: 'Password has been reset successfully!'
-    })
+      message: "Password has been reset successfully!",
+    });
   } catch (error) {
-    console.log(`Error in reset password. Code: ${error}`)
+    console.log(`Error in reset password. Code: ${error}`);
     res.status(400).json({
       success: false,
       message: error.message,
-    })
+    });
   }
 };
 
-export { signup, login, logout, verifyEmail, forgotPassword, resetPassword };
+const checkAuth = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId)
+    if(!user){
+      return res.status(400).json({
+        success: false,
+        message: `User not found`,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      user
+    });
+  } catch (error) {
+    console.log(`Error in checkAuth. Code: ${error}`)
+    res.status(400).json({
+      success: false,
+      message: error.message
+    })
+  }
+}
+
+export { 
+  signup, 
+  login, 
+  logout, 
+  verifyEmail, 
+  forgotPassword, 
+  resetPassword,
+  checkAuth
+};
