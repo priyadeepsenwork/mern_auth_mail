@@ -1,22 +1,17 @@
 import "./App.css";
-import { Route, Routes } from "react-router-dom";
-import LoginPage from "./components/LoginPage";
-import SignupPage from "./components/SignupPage";
 import Header from "./components/Header";
-
+import { ThemeProvider } from "./components/theme-provider";
 function App() {
   return (
-  <section className="poppins-regular">
-    <div>
-      <Header />
-    </div>
-    <Routes>
-      <Route path="/" element="Home"/>
-      <Route path="/signup" element={<SignupPage />} />
-      <Route path="/login" element={<LoginPage />} />
-    </Routes>
-  </section>
-);
+    <ThemeProvider  defaultTheme="dark" storageKey="vite-ui-theme">
+      <section className="poppins-regular">
+        <div>
+          <Header />
+        </div>
+        
+      </section>
+    </ThemeProvider>
+  );
 }
 
 export default App;
